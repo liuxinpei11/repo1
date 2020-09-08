@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/aop
+       http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+<context:annotation-config/>
+<context:component-scan base-package="dao,userService,aop"/>
+    <!-->
+    先去扫描dao,userService,aop这几个包，发现aop这个包下面的LogInterceptor1有Component标签
+    就给这个类进行初始化，发现Aspect标签，就给他进行动态的代理
+    <!-->
+<!--<aop:aspectj-autoproxy/>-->
+    <!-->
+    默认用@resource去取xml里面配置的对象的时候，按照byname去取，但是这里写的是myDataSource，所以直接
+    @resource取不到，这里面为了方便改成DataSource，就不需要用resource(name="u")去取了
+    <!-->
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
+          destroy-method="close">
+
+        <property name="driverClassName" value="com.mysql.cj.jdbc.Driver" />
+
+        <property name="url" value="jdbc:mysql://10.197.236.232:3306/hdmp" />
+
+        <property name="username" value="hdmp" />
+
+        <property name="password" value="ys123456" />
+
+    </bean>
+    <bean id="logInterceptor" class="aop.LogInterceptor1">
+    </bean>
+    <aop:config>
+        <!-->
+        生成一个切面，在这个切面add方法上加入各种各样的逻辑
+        <!-->
+        <aop:pointcut id="servicePointcut" expression="execution(public * userService..*.add(..))"/>
+        <!-->
+        申明切面的对象
+        <!-->
+        <aop:aspect id="logAspect" ref="logInterceptor">
+            <!-->
+            在方法add前调用before方法
+            <!-->
+            <aop:before method="before" pointcut-ref="servicePointcut"/>
+        </aop:aspect>
+    </aop:config>
+
+
+</beans>
